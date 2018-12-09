@@ -4,7 +4,7 @@ Special thanks to [Prototypical Networks repo](https://github.com/jakesnell/prot
 
 ### Install dependencies
 
-* This code has been tested on Ubuntu 16.04 with Python 2.7 and PyTorch 0.4.1.
+* This code has been tested on Ubuntu 16.04 with Python 3.6 and PyTorch 0.4.1.
 
 ### Set up the Omniglot dataset
 
