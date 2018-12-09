@@ -2,20 +2,28 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 from torch.autograd import Variable
 
-from utils import euclidean_dist
+from .utils import euclidean_dist
 
-class baseline(nn.Module):
+class Flatten(nn.Module):
+    def __init__(self):
+        super(Flatten, self).__init__()
+
+    def forward(self, x):
+        return x.view(x.size(0), -1)
+
+class baseline_model(nn.Module):
     def __init__(self, encoder):
-        super(baseline,self).__init__()
+        super(baseline_model,self).__init__()
         self.encoder = encoder
     
     def forward(self,sample):
         xs = Variable(sample['xs']) # support
         xq = Variable(sample['xq']) # query
         
-        n_classes = xs.size(0)
+        n_class = xs.size(0)
         n_support = xs.size(1)
         n_query = xq.size(1)
         
@@ -48,6 +56,33 @@ class baseline(nn.Module):
             'loss': loss_val.item(),
             'acc': acc_val.item()
         }
+    
+class encoder(nn.Module):
+    def __init__(self,in_dim,hid_dim,out_dim):
+        super(encoder,self).__init__()
+        self.model = nn.Sequential(
+                self.make_conv_block(in_dim, hid_dim),
+                self.make_conv_block(hid_dim, hid_dim),
+                self.make_conv_block(hid_dim, hid_dim),
+                self.make_conv_block(hid_dim, out_dim),
+                Flatten()
+                )
+        
+    
+    def make_conv_block(self,in_channels,out_channels):
+        return nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, 3, padding=1),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(),
+            nn.MaxPool2d(2)
+        )
+    
+    def forward(self,x):
+        return self.model.forward(x)
+        
+    
+    
+        
 
    
     
