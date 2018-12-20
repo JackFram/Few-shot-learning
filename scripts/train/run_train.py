@@ -31,6 +31,16 @@ parser.add_argument('--data.trainval', action='store_true', help="run in train+v
 parser.add_argument('--data.sequential', action='store_true', help="use sequential sampler instead of episodic (default: False)")
 parser.add_argument('--data.cuda', action='store_true', help="run in CUDA mode (default: False)")
 
+
+# model args
+parser.add_argument('--model.input_dim', type=int, default=1, metavar='INPUTDIM')
+parser.add_argument('--model.hid_dim', type=int, default=64, metavar='HIDDIM')
+parser.add_argument('--model.out_dim', type=int, default=64, metavar='OUTPUTDIM')
+parser.add_argument('--model.save_path', type=str, default='../model_saved/', metavar='OUTPUTDIM')
+
+# train args
+parser.add_argument('--train.epoch_num', type=int, default=1, metavar='EPOCHNUM')
+
 args = vars(parser.parse_args())
 
 main(args)
