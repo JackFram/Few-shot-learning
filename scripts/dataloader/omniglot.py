@@ -78,33 +78,35 @@ def extract_episode(n_support, n_query, d):
         'xq': xq
     }
 
-def load(splits):
-    #### the result of this is a Dataloader which contains n_episodes, each episodes have n_way classes and 
-    split_dir = os.path.join(OMNIGLOT_DATA_DIR, 'splits', 'vinyals') ##opt['data.split']
+def load(splits,opt):
+    split_dir = os.path.join(OMNIGLOT_DATA_DIR, 'splits', opt['data.split'])
 
     ret = { }
     for split in splits:
-        if split in ['val', 'test']:
-            n_way = 5 #opt['data.test_way']
+        if split in ['val', 'test'] and opt['data.test_way'] != 0:
+            n_way = opt['data.test_way']
         else:
-            n_way = 60  #opt['data.way']
+            n_way = opt['data.way']
 
-        n_support = 5 #opt['data.shot']
+        if split in ['val', 'test'] and opt['data.test_shot'] != 0:
+            n_support = opt['data.test_shot']
+        else:
+            n_support = opt['data.shot']
+
+        if split in ['val', 'test'] and opt['data.test_query'] != 0:
+            n_query = opt['data.test_query']
+        else:
+            n_query = opt['data.query']
 
         if split in ['val', 'test']:
-            n_query = 15  #opt['data.test_query']
+            n_episodes = opt['data.test_episodes']
         else:
-            n_query = 5  #opt['data.query']
-
-        if split in ['val', 'test']:
-            n_episodes = 100 #opt['data.test_episodes']
-        else:
-            n_episodes = 100 #opt['data.train_episodes']
+            n_episodes = opt['data.train_episodes']
 
         transforms = [partial(convert_dict, 'class'),
                       load_class_images,
                       partial(extract_episode, n_support, n_query)]
-        if False:
+        if opt['data.cuda']:
             transforms.append(CudaTransform())
 
         transforms = compose(transforms)
@@ -113,10 +115,9 @@ def load(splits):
         with open(os.path.join(split_dir, "{:s}.txt".format(split)), 'r') as f:
             for class_name in f.readlines():
                 class_names.append(class_name.rstrip('\n'))
-                #print(class_name)
         ds = TransformDataset(ListDataset(class_names), transforms)
 
-        if False:   #opt['data.sequential']
+        if opt['data.sequential']:
             sampler = SequentialBatchSampler(len(ds))
         else:
             sampler = EpisodicBatchSampler(len(ds), n_way, n_episodes)
@@ -124,4 +125,4 @@ def load(splits):
         # use num_workers=0, otherwise may receive duplicate episodes
         ret[split] = torch.utils.data.DataLoader(ds, batch_sampler=sampler, num_workers=0)
 
-    return ret
+        return ret

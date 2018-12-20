@@ -33,4 +33,6 @@ parser.add_argument('--data.cuda', action='store_true', help="run in CUDA mode (
 
 args = vars(parser.parse_args())
 
+main(args)
+
 print(main(args))

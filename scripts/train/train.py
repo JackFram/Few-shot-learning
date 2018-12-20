@@ -8,9 +8,11 @@ import torch.optim.lr_scheduler as lr_scheduler
 
 
 def main(opt=None):
-    data = omn_loader.load(["train"])
+    data = omn_loader.load(["train"],opt)
     model = baseline_model(encoder(1,64,64))
     model.train()
+    if(opt['data.cuda']):
+        model.cuda()
     optimizer = optim.Adam(model.parameters(),lr=0.0001)
     for idx,image in enumerate(data["train"]):
         loss,acc = model.forward(image)
