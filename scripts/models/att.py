@@ -14,9 +14,9 @@ class Flatten(nn.Module):
     def forward(self, x):
         return x.view(x.size(0), -1)
 
-class baseline_model(nn.Module):
+class att_model(nn.Module):
     def __init__(self, opt):
-        super(baseline_model,self).__init__()
+        super(att_model,self).__init__()
         self.encoder = encoder(opt)
     
     def forward(self,sample):
@@ -60,25 +60,34 @@ class baseline_model(nn.Module):
 class encoder(nn.Module):
     def __init__(self,opt):
         super(encoder,self).__init__()
-        self.model = nn.Sequential(
-                self.make_conv_block(opt['model.input_dim'], opt['model.hid_dim']),
-                self.make_conv_block(opt['model.hid_dim'], opt['model.hid_dim']),
-                self.make_conv_block(opt['model.hid_dim'], opt['model.hid_dim']),
-                self.make_conv_block(opt['model.hid_dim'], opt['model.out_dim']),
-                Flatten()
+        self.opt = opt
+        self.feature = nn.Sequential(
+                self.make_conv_block(opt['model.input_dim'], opt['model.hid_dim'], 1),
+                self.make_conv_block(opt['model.hid_dim'], opt['model.hid_dim'], 2),
+                self.make_conv_block(opt['model.hid_dim'], opt['model.hid_dim'],1),
+                self.make_conv_block(opt['model.hid_dim'], opt['model.out_dim'],1),
                 )
+        self.linear = nn.Linear(opt['model.out_dim']*2*2,opt['model.out_dim'])
+        self.Flatten = Flatten()
+        
         
     
-    def make_conv_block(self,in_channels,out_channels):
+    def make_conv_block(self,in_channels,out_channels,padding):
         return nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, 3, padding=1),
+            nn.Conv2d(in_channels, out_channels, 3, padding=padding),
             nn.BatchNorm2d(out_channels),
             nn.ReLU(),
             nn.MaxPool2d(2)
         )
     
     def forward(self,x):
-        return self.model.forward(x)
+        feature_map = self.feature(x)
+        att_score = self.linear(self.Flatten(feature_map))
+        att_param = F.softmax(att_score,dim=1)
+        att_param = att_param.view(att_param.size(0),self.opt['model.out_dim'],1,1).repeat(1,1,2,2)
+        result = self.Flatten(att_param*feature_map*10)
+        return result
+        
         
     
     

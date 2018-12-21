@@ -2,7 +2,7 @@ import sys
 sys.path.append("..")
 
 import dataloader.omniglot as omn_loader
-from models.baseline import baseline_model,encoder
+from models.att import att_model
 import torch
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler 
@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 def main(opt=None):
     data = omn_loader.load(["train"],opt)
-    model = baseline_model(opt)
+    model = att_model(opt)
     model.train()
     if(opt['data.cuda']):
         model.cuda()
