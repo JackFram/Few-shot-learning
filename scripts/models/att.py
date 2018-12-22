@@ -44,9 +44,9 @@ class att_model(nn.Module):
         zq = output[n_class*n_support:]
 
         dists = euclidean_dist(zq, z_proto)
-        
-        log_p_y = F.log_softmax(-dists, dim=1).view(n_class, n_query, -1)
 
+        log_p_y = F.log_softmax(-dists, dim=1).view(n_class, n_query, -1)
+        
         loss_val = -log_p_y.gather(2, target_inds).squeeze().view(-1).mean()
 
         _, y_hat = log_p_y.max(2)
@@ -67,7 +67,10 @@ class encoder(nn.Module):
                 self.make_conv_block(opt['model.hid_dim'], opt['model.hid_dim'],1),
                 self.make_conv_block(opt['model.hid_dim'], opt['model.out_dim'],1),
                 )
-        self.linear = nn.Linear(opt['model.out_dim']*2*2,opt['model.out_dim'])
+        self.linear_1 = nn.Linear(opt['model.out_dim']*2*2,opt['model.out_dim'])
+        self.linear_2 = nn.Linear(opt['model.out_dim']*2*2,opt['model.embed_dim'])
+        nn.init.constant_(self.linear_1.weight,0)
+        nn.init.constant_(self.linear_1.bias,0)
         self.Flatten = Flatten()
         
         
@@ -82,10 +85,11 @@ class encoder(nn.Module):
     
     def forward(self,x):
         feature_map = self.feature(x)
-        att_score = self.linear(self.Flatten(feature_map))
+        att_score = self.linear_1(self.Flatten(feature_map))
         att_param = F.softmax(att_score,dim=1)
         att_param = att_param.view(att_param.size(0),self.opt['model.out_dim'],1,1).repeat(1,1,2,2)
-        result = self.Flatten(att_param*feature_map*10)
+        att_param = att_param/att_param.max()
+        result = self.linear_2(self.Flatten(att_param*feature_map))
         return result
         
         

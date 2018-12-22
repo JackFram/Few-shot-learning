@@ -17,17 +17,24 @@ def main(opt=None):
         model.cuda()
         
     optimizer = optim.Adam(model.parameters(),lr=0.0001)
-    
-    
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=100, gamma=0.1)
+    best_acc = 0
+    file_object = open('acc_log.txt', 'w')
+
+
     for epoch in range(opt['train.epoch_num']):
+        scheduler.step()
         for idx,image in enumerate(tqdm(data["train"])):
             loss,acc = model.forward(image)
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            print(loss,acc)
+            if(acc>best_acc):
+                best_acc = acc
+                file_object.write(acc + '\n')
+                
+    file_object.close()
+    
+       
     torch.save(model.state_dict(),opt['model.save_path'] + '1.pth')
-        
-
-if __name__=="__main__":
-    main()
+       
